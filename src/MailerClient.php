@@ -23,7 +23,7 @@ class MailerClient
     /**
      * @param string $server
      * @param int    $port
-     * @param int    $type
+     * @param        $type
      * @throws \Exception
      */
     public function __construct(string $server, int $port, $type)

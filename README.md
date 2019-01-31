@@ -10,14 +10,14 @@ go(function (){
     $config->isStartSSL(true);
     $config->setUsername('username');
     $config->setPassword('password OR code');
-    $config->setMailFrom('mail from');
+    $config->setMailFrom('sender email');
     $mailer = new \EasySwoole\Smtp\Mailer($config);
 
 
-    $mimeBean = new \EasySwoole\Mailer\Smtp\Html();
+    $mimeBean = new \EasySwoole\Smtp\Message\Html();
     $mimeBean->setSubject('Hello Word!');
     $mimeBean->setBody('<h1>Hello Word</h1>');
 
-    $mailer->mail('maile', $mimeBean);
+    $mailer->mail('recipient email', $mimeBean);
 });
 ```
