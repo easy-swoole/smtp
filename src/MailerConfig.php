@@ -39,6 +39,10 @@ class MailerConfig extends SplBean
     /** @var string 发件人 */
     protected $mailFrom;
 
+    protected $timeout = 3.0;
+
+
+
     /**
      * initialize
      * 初始化操作
@@ -164,4 +168,21 @@ class MailerConfig extends SplBean
     {
         $this->mailFrom = $mailFrom;
     }
+
+    /**
+     * @return float
+     */
+    public function getTimeout(): float
+    {
+        return $this->timeout;
+    }
+
+    /**
+     * @param float $timeout
+     */
+    public function setTimeout(float $timeout): void
+    {
+        $this->timeout = $timeout;
+    }
+
 }

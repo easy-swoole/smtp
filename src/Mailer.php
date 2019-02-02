@@ -39,6 +39,8 @@ class Mailer
             $this->client = new MailerClient($this->config->getServer(), $this->config->getPort(), SWOOLE_TCP);
         }
 
+        $this->client->setTimeout($this->config->getTimeout());
+
         $this->client->sendHello();
 
         if ($this->config->isStartSSL()) {

@@ -21,6 +21,8 @@ class MailerClient
     /** @var string|null */
     private $serverHost;
 
+    private $timeout = 3.0;
+
     /**
      * @param string $server
      * @param int    $port
@@ -40,6 +42,16 @@ class MailerClient
 
         $this->setClientOption();
     }
+
+
+    /**
+     * @param float $timeout
+     */
+    public function setTimeout(float $timeout): void
+    {
+        $this->timeout = $timeout;
+    }
+
 
     /**
      * @return bool
@@ -153,12 +165,11 @@ class MailerClient
     }
 
     /**
-     * @param int $timeout
      * @return string|null
      */
-    public function recv(int $timeout = -1) : ? string
+    public function recv() : ? string
     {
-        $msg = $this->client->recv($timeout);
+        $msg = $this->client->recv($this->timeout);
         if ($msg == '' || $msg === false)
         {
             return null;
@@ -168,13 +179,12 @@ class MailerClient
 
     /**
      * @param string $string
-     * @param float $timeout
      * @return bool
      */
-    private function recvHas(string $string,float $timeout = 3.0) : bool
+    private function recvHas(string $string) : bool
     {
         while (true) {
-            $recv = $this->recv($timeout);
+            $recv = $this->recv();
             if ($recv && strpos($recv, $string) !== false) {
                 return true;
             }
