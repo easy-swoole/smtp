@@ -1,7 +1,11 @@
-# Smtp
----
-```php
 <?php
+/**
+ * Created by PhpStorm.
+ * User: runs
+ * Date: 19-1-28
+ * Time: 下午11:29
+ */
+
 require_once 'vendor/autoload.php';
 
 go(function (){
@@ -10,7 +14,7 @@ go(function (){
     $config->isStartSSL(true);
     $config->setUsername('username');
     $config->setPassword('password OR code');
-    $config->setMailFrom('sender email');
+    $config->setMailFrom('mail from');
     $mailer = new \EasySwoole\Smtp\Mailer($config);
 
 
@@ -18,6 +22,5 @@ go(function (){
     $mimeBean->setSubject('Hello Word!');
     $mimeBean->setBody('<h1>Hello Word</h1>');
 
-    $mailer->mail('recipient email', $mimeBean);
+    $mailer->mail('maile', $mimeBean);
 });
-```

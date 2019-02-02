@@ -1,0 +1,25 @@
+{
+    "name": "easyswoole/smtp",
+    "description": "EasySwoole mailer component",
+    "type": "library",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "RunsTp",
+            "email": "runstp@163.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1.0",
+        "ext-swoole": "^4.2.6",
+        "easyswoole/spl": "^1.1"
+    },
+    "require-dev": {
+        "eaglewu/swoole-ide-helper": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "EasySwoole\\Smtp\\": "src/"
+        }
+    }
+}
