@@ -9,6 +9,7 @@
 namespace EasySwoole\Smtp;
 
 
+use EasySwoole\Smtp\Exception\Exception;
 use EasySwoole\Smtp\Message\MimeMessageBaseBean;
 use Swoole\Coroutine\Client;
 
@@ -30,11 +31,11 @@ class MailerClient
     {
         $this->client = new Client($type);
         if ($this->client->connect($server, $port) === false) {
-            throw new \Exception('client connect failure!');
+            throw new Exception('client connect failure!');
         }
 
         if (!$this->recvHost()) {
-            throw new \Exception('server not response!');
+            throw new Exception('server not response!');
         }
 
         $this->setClientOption();
@@ -47,13 +48,11 @@ class MailerClient
     public function sendHello() : bool
     {
         if (!$this->send('ehlo '. $this->serverHost)) {
-            $this->close();
-            throw new \Exception('send hello error!');
+            throw new Exception('send hello error!');
         }
 
         if (!$this->recvHas('250')) {
-            $this->close();
-            throw new \Exception('send hello error!');
+            throw new Exception('send hello error!');
         }
         return true;
     }
@@ -67,20 +66,16 @@ class MailerClient
     public function sendHeader(string $mailFrom, string $mailTo)
     {
         if (!$this->send("mail from:<{$mailFrom}>") || !$this->recvHas('250')) {
-            $this->close();
-            throw new \Exception('send mail from error!');
+            throw new Exception('send mail from error!');
         }
 
         if (!$this->send("rcpt to:<{$mailTo}>") || !$this->recvHas('250')) {
-            $this->close();
-            throw new \Exception('send rcpt error!');
+            throw new Exception('send rcpt error!');
         }
 
         if (!$this->send('data') || !$this->recvHas('354')) {
-            $this->close();
-            throw new \Exception('send data error!');
+            throw new Exception('send data error!');
         }
-
         return true;
     }
 
@@ -103,15 +98,12 @@ class MailerClient
 
         $this->send($mail);
         if (!$this->send('.') || !$this->recvHas('250')) {
-            $this->close();
-            throw new \Exception('send mail error!');
+            throw new Exception('send mail error!');
         }
 
         if (!$this->send('quit') || !$this->recvHas('221')) {
-            $this->close();
-            throw new \Exception('send quit error!');
+            throw new Exception('send quit error!');
         }
-        $this->close();
         return true;
     }
 
@@ -124,18 +116,15 @@ class MailerClient
     public function auth(string $username, string $password) : bool
     {
         if (!$this->send('auth login') || !$this->recvHas('334')) {
-            $this->close();
-            throw new \Exception('auth login error!');
+            throw new Exception('auth login error!');
         }
 
         if (!$this->send(base64_encode($username)) || !$this->recvHas('334')) {
-            $this->close();
-            throw new \Exception('auth username error!');
+            throw new Exception('auth username error!');
         }
 
         if (!$this->send(base64_encode($password)) || !$this->recvHas('235')) {
-            $this->close();
-            throw new \Exception('auth password error!');
+            throw new Exception('auth password error!');
         }
 
         return true;
@@ -151,8 +140,7 @@ class MailerClient
             $this->client->enableSSL();
             return $this->sendHello();
         }
-        $this->close();
-        throw new \Exception('enableSSL error!');
+        throw new Exception('enableSSL error!');
     }
 
     /**
@@ -180,12 +168,13 @@ class MailerClient
 
     /**
      * @param string $string
+     * @param float $timeout
      * @return bool
      */
-    private function recvHas(string $string) : bool
+    private function recvHas(string $string,float $timeout = 3.0) : bool
     {
         while (true) {
-            $recv = $this->recv(1);
+            $recv = $this->recv($timeout);
             if ($recv && strpos($recv, $string) !== false) {
                 return true;
             }
@@ -222,11 +211,17 @@ class MailerClient
     /**
      * close
      */
-    private function close() : void
+    public function close() : void
     {
         if ($this->client->connected)
         {
             $this->client->close();
         }
+    }
+
+    function __destruct()
+    {
+        // TODO: Implement __destruct() method.
+        $this->close();
     }
 }

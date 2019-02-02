@@ -56,7 +56,7 @@ class Mailer
      * @return bool
      * @throws \Exception
      */
-    public function mail(string $mailTo, MimeMessageBaseBean $mimeBean)
+    public function sendTo(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
         /** 连接邮件服务器 */
         $this->connect();
