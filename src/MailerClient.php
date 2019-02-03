@@ -27,7 +27,7 @@ class MailerClient
      * @param string $server
      * @param int    $port
      * @param        $type
-     * @throws \Exception
+     * @throws Exception
      */
     public function __construct(string $server, int $port, $type)
     {
@@ -55,7 +55,7 @@ class MailerClient
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendHello() : bool
     {
@@ -73,7 +73,7 @@ class MailerClient
      * @param string $mailFrom
      * @param string $mailTo
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendHeader(string $mailFrom, string $mailTo)
     {
@@ -96,7 +96,7 @@ class MailerClient
      * @param string              $mailTo
      * @param MimeMessageBaseBean $mimeBean
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function sendMime(string $mailFrom, string $mailTo, MimeMessageBaseBean $mimeBean)
     {
@@ -123,7 +123,7 @@ class MailerClient
      * @param string $username
      * @param string $password
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function auth(string $username, string $password) : bool
     {
@@ -144,7 +144,7 @@ class MailerClient
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function enableSSL() : bool
     {
@@ -229,9 +229,11 @@ class MailerClient
         }
     }
 
-    function __destruct()
+    /**
+     * __destruct
+     */
+    public function __destruct()
     {
-        // TODO: Implement __destruct() method.
         $this->close();
     }
 }

@@ -29,7 +29,7 @@ class Mailer
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception\Exception
      */
     protected function connect() : bool
     {
@@ -51,12 +51,10 @@ class Mailer
     }
 
     /**
-     * mail
-     *
      * @param string              $mailTo
      * @param MimeMessageBaseBean $mimeBean
      * @return bool
-     * @throws \Exception
+     * @throws Exception\Exception
      */
     public function sendTo(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
