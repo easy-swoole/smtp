@@ -185,6 +185,10 @@ class MailerClient
     {
         while (true) {
             $recv = $this->recv();
+            /** timeout */
+            if ($recv === false) {
+                return false;
+            }
             if ($recv && strpos($recv, $string) !== false) {
                 return true;
             }
