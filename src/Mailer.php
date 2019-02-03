@@ -67,9 +67,22 @@ class Mailer
             $this->client->auth($this->config->getUsername(), $this->config->getPassword());
         }
         /** 发送头信息 */
-        $this->client->sendHeader($this->config->getMailFrom(), $mailTo);
+        $this->client->sendHeader($this->config->getUsername(), $mailTo);
         /** 发送主体 */
-        $this->client->sendMime($this->config->getMailFrom(), $mailTo, $mimeBean);
+        $this->client->sendMime($this->createMailFrom(), $mailTo, $mimeBean);
         return true;
+    }
+
+    /**
+     * createMailFrom
+     *
+     * @return string
+     */
+    protected function createMailFrom() : string
+    {
+        if ($this->config->getMailFrom()) {
+            return "{$this->config->getMailFrom()} <{$this->config->getUsername()}>";
+        }
+        return $this->config->getUsername();
     }
 }
