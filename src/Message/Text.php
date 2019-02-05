@@ -11,5 +11,9 @@ namespace EasySwoole\Smtp\Message;
 
 class Text extends MimeMessageBaseBean
 {
-
+    protected function initialize(): void
+    {
+        parent::initialize();
+        $this->contentType = $this->contentType ?? 'text/plain';
+    }
 }
