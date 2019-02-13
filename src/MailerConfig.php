@@ -22,13 +22,10 @@ class MailerConfig extends SplBean
     protected $server;
 
     /** @var int 端口号 */
-    protected $port;
+    protected $port = 25;
 
     /** @var bool 是否开启ssl */
     protected $ssl;
-
-    /** @var bool 是否开启startSSL */
-    protected $startSSL;
 
     /** @var string 登陆用户名 */
     protected $username;
@@ -106,22 +103,6 @@ class MailerConfig extends SplBean
     }
 
     /**
-     * @return bool
-     */
-    public function isStartSSL(): bool
-    {
-        return $this->startSSL;
-    }
-
-    /**
-     * @param bool $startSSL
-     */
-    public function setStartSSL(bool $startSSL): void
-    {
-        $this->startSSL = $startSSL;
-    }
-
-    /**
      * @return string
      */
     public function getUsername(): string
@@ -134,6 +115,9 @@ class MailerConfig extends SplBean
      */
     public function setUsername(string $username): void
     {
+        if(empty($this->mailFrom)){
+            $this->mailFrom = $username;
+        }
         $this->username = $username;
     }
 

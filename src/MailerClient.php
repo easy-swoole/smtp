@@ -11,6 +11,7 @@ namespace EasySwoole\Smtp;
 
 use EasySwoole\Smtp\Exception\Exception;
 use EasySwoole\Smtp\Message\MimeMessageBaseBean;
+use EasySwoole\Utility\Random;
 use Swoole\Coroutine\Client;
 
 class MailerClient
@@ -23,26 +24,22 @@ class MailerClient
 
     private $timeout = 3.0;
 
-    /**
-     * @param string $server
-     * @param int    $port
-     * @param        $type
-     * @throws Exception
-     */
-    public function __construct(string $server, int $port, $type)
+    private $config;
+
+    public function __construct(MailerConfig $config)
     {
-        $this->client = new Client($type);
-        if ($this->client->connect($server, $port) === false) {
-            throw new Exception('client connect failure!');
+        $this->config = $config;
+        if($config->isSsl()){
+            $this->client = new Client( SWOOLE_TCP | SWOOLE_SSL);
+        }else{
+            $this->client = new Client( SWOOLE_TCP );
         }
-
-        if (!$this->recvHost()) {
-            throw new Exception('server not response!');
-        }
-
-        $this->setClientOption();
+        $this->client->set([
+            'open_eof_check' => true,
+            'package_eof' => "\r\n",
+            'package_max_length' => 1024 * 1024 * 2,
+        ]);
     }
-
 
     /**
      * @param float $timeout
@@ -52,175 +49,69 @@ class MailerClient
         $this->timeout = $timeout;
     }
 
-
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    public function sendHello() : bool
+    public function send(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
-        if (!$this->send('ehlo '. $this->serverHost)) {
-            throw new Exception('send hello error!');
+        /*
+         * 发送ehlo
+         */
+        if ($this->client->connect($this->config->getServer(), $this->config->getPort(),$this->timeout) === false) {
+            throw new Exception("connect {$this->config->getServer()}@{$this->config->getPort()} fail");
         }
-
-        if (!$this->recvHas('250')) {
-            throw new Exception('send hello error!');
+        $str = $this->recvCodeCheck('220');
+        $ehloHost = explode(' ',$str)[1];
+        $this->client->send("ehlo {$ehloHost}\r\n");
+        //先看是否得到250应答,并清除多余应答
+        $this->recvCodeCheck('250');
+        while (1){
+            $peek = $this->client->recv($this->timeout);
+            if(empty($peek)){
+                throw new Exception('waiting 250 code error');
+            }else{
+                if(substr($peek,3,1) != '-'){
+                    break;
+                }
+            }
         }
-        return true;
-    }
-
-    /**
-     * @param string $mailFrom
-     * @param string $mailTo
-     * @return bool
-     * @throws Exception
-     */
-    public function sendHeader(string $mailFrom, string $mailTo)
-    {
-        if (!$this->send("mail from:<{$mailFrom}>") || !$this->recvHas('250')) {
-            throw new Exception('send mail from error!');
-        }
-
-        if (!$this->send("rcpt to:<{$mailTo}>") || !$this->recvHas('250')) {
-            throw new Exception('send rcpt error!');
-        }
-
-        if (!$this->send('data') || !$this->recvHas('354')) {
-            throw new Exception('send data error!');
-        }
-        return true;
-    }
-
-    /**
-     * @param string              $mailFrom
-     * @param string              $mailTo
-     * @param MimeMessageBaseBean $mimeBean
-     * @return bool
-     * @throws Exception
-     */
-    public function sendMime(string $mailFrom, string $mailTo, MimeMessageBaseBean $mimeBean)
-    {
+        $this->client->send("auth login\r\n");
+        $this->recvCodeCheck('334');
+        $this->client->send(base64_encode($this->config->getUsername())."\r\n");
+        $this->recvCodeCheck('334');
+        $this->client->send(base64_encode($this->config->getPassword())."\r\n");
+        $this->recvCodeCheck('235');
+        //start send data
+        $this->client->send("mail from:<{$this->config->getMailFrom()}>\r\n");
+        $this->recvCodeCheck('250');
+        $this->client->send("rcpt to:<{$mailTo}>\r\n");
+        $this->recvCodeCheck('250');
+        $this->client->send("data\r\n");
+        $this->recvCodeCheck('354');
+        //build body
         $mail = "MIME-Version: {$mimeBean->getMimeVersion()}\r\n";
-        $mail.= "From: {$mailFrom}\r\n";
+        $mail.= "From: {$this->config->getMailFrom()}\r\n";
         $mail.= "To: {$mailTo}\r\n";
         $mail.= "Subject: {$mimeBean->getSubject()}\r\n";
-        $mail.= "Content-type: {$mimeBean->getContentType()}; charset={$mimeBean->getCharset()}\r\n";
-        $mail.= "\r\n";
-        $mail.= $mimeBean->getBody();
+        //构造body
+        $this->client->send($mail);
+        $this->client->send(".\r\n");
+        $this->recvCodeCheck('250');
+        $this->client->send("quit\r\n");
+        $this->recvCodeCheck('221');
 
-        $this->send($mail);
-        if (!$this->send('.') || !$this->recvHas('250')) {
-            throw new Exception('send mail error!');
-        }
-
-        if (!$this->send('quit') || !$this->recvHas('221')) {
-            throw new Exception('send quit error!');
-        }
-        return true;
     }
 
-    /**
-     * @param string $username
-     * @param string $password
-     * @return bool
-     * @throws Exception
-     */
-    public function auth(string $username, string $password) : bool
+    private function recvCodeCheck(string $string) : string
     {
-        if (!$this->send('auth login') || !$this->recvHas('334')) {
-            throw new Exception('auth login error!');
+        $recv = $this->client->recv($this->timeout);
+        if ($recv === false) {
+            throw new Exception("expect code {$string} timeout");
         }
-
-        if (!$this->send(base64_encode($username)) || !$this->recvHas('334')) {
-            throw new Exception('auth username error!');
+        if ($recv && strpos($recv, $string) !== false) {
+            return $recv;
+        }else{
+            throw new Exception($recv);
         }
-
-        if (!$this->send(base64_encode($password)) || !$this->recvHas('235')) {
-            throw new Exception('auth password error!');
-        }
-
-        return true;
     }
 
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    public function enableSSL() : bool
-    {
-        if ($this->send('starttls') && $this->recvHas('220')) {
-            $this->client->enableSSL();
-            return $this->sendHello();
-        }
-        throw new Exception('enableSSL error!');
-    }
-
-    /**
-     * @param string $msg
-     * @return bool
-     */
-    private function send(string $msg) : bool
-    {
-        return $this->client->send("{$msg}\r\n");
-    }
-
-    /**
-     * @return string|null
-     */
-    public function recv() : ? string
-    {
-        $msg = $this->client->recv($this->timeout);
-        if ($msg == '' || $msg === false)
-        {
-            return null;
-        }
-        return $msg;
-    }
-
-    /**
-     * @param string $string
-     * @return bool
-     */
-    private function recvHas(string $string) : bool
-    {
-        while (true) {
-            $recv = $this->recv();
-            /** timeout */
-            if ($recv === false) {
-                return false;
-            }
-            if ($recv && strpos($recv, $string) !== false) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * @return bool
-     */
-    private function recvHost() : bool
-    {
-        $recv = $this->recv();
-        if (!$recv || strpos($recv, '220') === false) {
-            return false;
-        }
-
-        $this->serverHost = (explode(' ', $recv))[1];
-        return true;
-    }
-
-    /**
-     * setClientOption
-     */
-    private function setClientOption()
-    {
-        $this->client->set([
-            'open_eof_check' => true,
-            'package_eof' => "\r\n",
-            'package_max_length' => 1024 * 1024 * 2,
-        ]);
-    }
 
     /**
      * close
@@ -232,6 +123,7 @@ class MailerClient
             $this->client->close();
         }
     }
+
 
     /**
      * __destruct
