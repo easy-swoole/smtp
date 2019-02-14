@@ -33,19 +33,9 @@ class Mailer
     public function sendTo(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
         $client = new MailerClient($this->config);
-        //直接调用客户端
+        $client->send($mailTo, $mimeBean);
+        return true;
     }
 
-    /**
-     * createMailFrom
-     *
-     * @return string
-     */
-    private function createMailFrom() : string
-    {
-        if ($this->config->getMailFrom()) {
-            return "{$this->config->getMailFrom()} <{$this->config->getUsername()}>";
-        }
-        return $this->config->getUsername();
-    }
+
 }
