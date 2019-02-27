@@ -11,16 +11,12 @@ namespace EasySwoole\Smtp;
 
 use EasySwoole\Smtp\Exception\Exception;
 use EasySwoole\Smtp\Message\MimeMessageBaseBean;
-use EasySwoole\Utility\Random;
 use Swoole\Coroutine\Client;
 
 class MailerClient
 {
     /** @var Client|null */
     private $client;
-
-    /** @var string|null */
-    private $serverHost;
 
     private $timeout = 3.0;
 
@@ -49,6 +45,11 @@ class MailerClient
         $this->timeout = $timeout;
     }
 
+    /**
+     * @param string              $mailTo
+     * @param MimeMessageBaseBean $mimeBean
+     * @throws Exception
+     */
     public function send(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
         /*
@@ -87,7 +88,7 @@ class MailerClient
         $this->recvCodeCheck('354');
         //build body
         $mail = "MIME-Version: {$mimeBean->getMimeVersion()}\r\n";
-        $mail.= "From: {$this->config->getMailFrom()}\r\n";
+        $mail.= "From: {$this->createMailFrom()}\r\n";
         $mail.= "To: {$mailTo}\r\n";
         $mail.= "Subject: {$mimeBean->getSubject()}\r\n";
         //构造body
@@ -96,9 +97,13 @@ class MailerClient
         $this->recvCodeCheck('250');
         $this->client->send("quit\r\n");
         $this->recvCodeCheck('221');
-
     }
 
+    /**
+     * @param string $string
+     * @return string
+     * @throws Exception
+     */
     private function recvCodeCheck(string $string) : string
     {
         $recv = $this->client->recv($this->timeout);
@@ -112,6 +117,18 @@ class MailerClient
         }
     }
 
+    /**
+     * createMailFrom
+     *
+     * @return string
+     */
+    private function createMailFrom() : string
+    {
+        if ($this->config->getMailFrom()) {
+            return "{$this->config->getMailFrom()} <{$this->config->getUsername()}>";
+        }
+        return $this->config->getUsername();
+    }
 
     /**
      * close
