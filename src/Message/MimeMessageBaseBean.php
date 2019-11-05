@@ -13,14 +13,21 @@ use EasySwoole\Spl\SplBean;
 
 abstract class MimeMessageBaseBean extends SplBean
 {
-    protected $mimeVersion;
-    protected $contentType;
-    protected $charset;
-    protected $contentTansferEncoding;
+    public const
+        ENCODING_BASE64 = 'base64',
+        ENCODING_7BIT = '7bit',
+        ENCODING_8BIT = '8bit',
+        ENCODING_QUOTED_PRINTABLE = 'quoted-printable';
+
+    protected $mimeVersion;              //协议版本
+    protected $contentType;              //设置contentType
+    protected $charset;                  //设置字符
+    protected $contentTransferEncoding;  //设置编码
     protected $contentId;
     protected $contentDescription;
     protected $subject;
     protected $body;
+    protected $attachments = [];
 
     protected function initialize(): void
     {
@@ -79,17 +86,17 @@ abstract class MimeMessageBaseBean extends SplBean
     /**
      * @return mixed
      */
-    public function getContentTansferEncoding()
+    public function getContentTransferEncoding()
     {
-        return $this->contentTansferEncoding;
+        return $this->contentTransferEncoding;
     }
 
     /**
-     * @param mixed $contentTansferEncoding
+     * @param mixed $contentTransferEncoding
      */
-    public function setContentTansferEncoding($contentTansferEncoding): void
+    public function setContentTransferEncoding($contentTransferEncoding): void
     {
-        $this->contentTansferEncoding = $contentTansferEncoding;
+        $this->contentTransferEncoding = $contentTransferEncoding;
     }
 
     /**
@@ -154,5 +161,21 @@ abstract class MimeMessageBaseBean extends SplBean
     public function setBody($body): void
     {
         $this->body = $body;
+    }
+
+    /**
+     * @param $attachment
+     */
+    public function addAttachment($attachment)
+    {
+        $this->attachments[] = $attachment;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttachments()
+    {
+        return $this->attachments;
     }
 }

@@ -9,9 +9,7 @@
 namespace EasySwoole\Smtp\Message;
 
 
-use EasySwoole\Spl\SplBean;
-
-class Attach extends SplBean
+class Attach extends MimeMessageBaseBean
 {
 
 }
