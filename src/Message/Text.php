@@ -9,20 +9,19 @@
 namespace EasySwoole\Smtp\Message;
 
 
+use EasySwoole\Smtp\MessageHandler;
+
 class Text extends MimeMessageBaseBean
 {
     protected function initialize(): void
     {
         parent::initialize();
-        $this->contentType = $this->contentType ?? 'text/plain';
+        $this->contentType = $this->contentType ?? 'text/plain; charset=UTF-8';
     }
 
     public function setBody($body): void
     {
-        //设置content-transfer-encode
-        $this->setContentTransferEncoding(preg_match('#[^\n]{990}#', $body)
-            ? self::ENCODING_QUOTED_PRINTABLE
-            : (preg_match('#[\x80-\xFF]#', $body) ? self::ENCODING_8BIT : self::ENCODING_7BIT));
         parent::setBody($body);
+        $this->contentTransferEncoding = MessageHandler::getContentTransferEncoding($body);
     }
 }

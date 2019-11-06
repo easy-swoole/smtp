@@ -36,9 +36,15 @@ class MailerConfig extends SplBean
     /** @var string 发件人 */
     protected $mailFrom;
 
+    /**
+     * @var float 发送超时时间
+     */
     protected $timeout = 3.0;
 
-
+    /**
+     * @var int 最大包大小
+     */
+    protected $maxPackage = 1024 * 1024 * 2;//2M
 
     /**
      * initialize
@@ -48,10 +54,8 @@ class MailerConfig extends SplBean
     {
         /** @var bool ssl 默认关闭ssl */
         $this->ssl = $this->ssl ?? false;
-        /** @var bool startSSL 默认关闭startSSL */
-        $this->startSSL = $this->startSSL ?? false;
         /** @var int port 尝试自动识别端口号 */
-        $this->port = $this->port ?? $this->ssl ? 465 : 25;
+        $this->port = $this->port ?? ($this->ssl ? 465 : 25);
     }
 
     /**
@@ -115,7 +119,7 @@ class MailerConfig extends SplBean
      */
     public function setUsername(string $username): void
     {
-        if(empty($this->mailFrom)){
+        if (empty($this->mailFrom)) {
             $this->mailFrom = $username;
         }
         $this->username = $username;
@@ -169,4 +173,13 @@ class MailerConfig extends SplBean
         $this->timeout = $timeout;
     }
 
+    public function setMaxPackage(int $maxPackage)
+    {
+        $this->maxPackage = $maxPackage;
+    }
+
+    public function getMaxPackage()
+    {
+        return $this->maxPackage;
+    }
 }

@@ -8,23 +8,15 @@
 
 namespace EasySwoole\Smtp\Message;
 
-
 use EasySwoole\Spl\SplBean;
 
 abstract class MimeMessageBaseBean extends SplBean
 {
-    public const
-        ENCODING_BASE64 = 'base64',
-        ENCODING_7BIT = '7bit',
-        ENCODING_8BIT = '8bit',
-        ENCODING_QUOTED_PRINTABLE = 'quoted-printable';
 
     protected $mimeVersion;              //协议版本
     protected $contentType;              //设置contentType
     protected $charset;                  //设置字符
     protected $contentTransferEncoding;  //设置编码
-    protected $contentId;
-    protected $contentDescription;
     protected $subject;
     protected $body;
     protected $attachments = [];
@@ -32,7 +24,7 @@ abstract class MimeMessageBaseBean extends SplBean
     protected function initialize(): void
     {
         $this->mimeVersion = $this->mimeVersion ?? '1.0';
-        $this->charset = $this->charset ?? 'utf8';
+        $this->charset = $this->charset ?? 'UTF-8';
     }
 
     /**
@@ -99,37 +91,6 @@ abstract class MimeMessageBaseBean extends SplBean
         $this->contentTransferEncoding = $contentTransferEncoding;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getContentId()
-    {
-        return $this->contentId;
-    }
-
-    /**
-     * @param mixed $contentId
-     */
-    public function setContentId($contentId): void
-    {
-        $this->contentId = $contentId;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getContentDescription()
-    {
-        return $this->contentDescription;
-    }
-
-    /**
-     * @param mixed $contentDescription
-     */
-    public function setContentDescription($contentDescription): void
-    {
-        $this->contentDescription = $contentDescription;
-    }
 
     /**
      * @return mixed

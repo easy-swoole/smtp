@@ -23,7 +23,6 @@ class MailerClient
 
     private $config;
 
-    const EOL = "\r\n";
 
     public function __construct(MailerConfig $config)
     {
@@ -33,11 +32,14 @@ class MailerClient
         } else {
             $this->client = new Client(SWOOLE_TCP);
         }
+
         $this->client->set([
             'open_eof_check' => true,
             'package_eof' => "\r\n",
-            'package_max_length' => 1024 * 1024 * 2,
+            'package_max_length' => $this->config->getMaxPackage(),
         ]);
+
+        $this->timeout = $this->config->getTimeout();
     }
 
     /**
@@ -48,11 +50,7 @@ class MailerClient
         $this->timeout = $timeout;
     }
 
-    /**
-     * @param string $mailTo
-     * @param MimeMessageBaseBean $mimeBean
-     * @throws Exception
-     */
+    //发送操作
     public function send(string $mailTo, MimeMessageBaseBean $mimeBean)
     {
         /*
@@ -89,24 +87,39 @@ class MailerClient
         $this->recvCodeCheck('250');
         $this->client->send($this->formatMsg("data"));
         $this->recvCodeCheck('354');
-        $boundary = '----=' . uniqid();
+
         //build body
         $mailBody = [];
         $mailBody[] = "MIME-Version: {$mimeBean->getMimeVersion()}";
         $mailBody[] = "From: {$this->createMailFrom()}";
         $mailBody[] = "To: {$mailTo}";
-        $mailBody[] = "Subject: {$mimeBean->getSubject()}";
-        $mailBody[] = "Content-Type:{$mimeBean->getContentType()};boundary='" . $boundary . "'" . self::EOL;
-        $mailBody[] = "Content-Transfer-Encoding:{$mimeBean->getContentTransferEncoding()}";
-        //发送附件
-        if (!empty($mimeBean->getAttachment())) {
-            $this->createAttachment($mimeBean);
+        $mailBody[] = "Subject: =?{$mimeBean->getCharset()}?B?" . base64_encode($mimeBean->getSubject()) . "?=";
+
+        $boundary = '------' . uniqid();
+        if (!empty($mimeBean->getAttachments())) {
+            $mailBody[] = $this->formatMsg("Content-Type: multipart/mixed;boundary=\"" . $boundary . "\"");
+            $mailBody[] = "--" . $boundary;
         }
+        $mailBody[] = "Content-Type: {$mimeBean->getContentType()}";
+        $mailBody[] = $this->formatMsg("Content-Transfer-Encoding: {$mimeBean->getContentTransferEncoding()}");
+
+        $mailBody[] = $this->formatMsg(MessageHandler::getEncodingContent($mimeBean));
+        //发送附件
+        if (!empty($mimeBean->getAttachments())) {
+            foreach ($mimeBean->getAttachments() as $attach) {
+                $mailBody[] = "--" . $boundary;
+                $mailBody = array_merge($mailBody, $this->createAttachment($attach));
+            }
+            $mailBody[] = "--" . $boundary . "--";
+        }
+
+        $output = preg_replace('#^\.#m', '..', trim(implode(MessageHandler::EOL, $mailBody)));
+
         //构造body
-        $this->client->send($mailBody);
-        $this->client->send(".\r\n");
+        $this->client->send($this->formatMsg($output));
+        $this->client->send($this->formatMsg("."));
         $this->recvCodeCheck('250');
-        $this->client->send("quit\r\n");
+        $this->client->send($this->formatMsg("quit"));
         $this->recvCodeCheck('221');
     }
 
@@ -141,34 +154,31 @@ class MailerClient
         return $this->config->getUsername();
     }
 
-
-    private function createAttachment(MimeMessageBaseBean $mimeBean)
+    //创建附件
+    private function createAttachment(Attach $attach)
     {
-        $headers = [];
-        $headers[] = $mimeBean->getBody() . self::EOL;
-        /**@var Attach $attach */
-        foreach ($mimeBean->getAttachment() as $attach) {
+        $attachmentBody = [];
 
-            $contentType = $attach->getContentType() ?? 'application/octet-stream';
+        $attachmentBody[] = "Content-Type:" . $attach->getContentType();
 
+        $attachmentBody[] = 'Content-Transfer-Encoding: ' . $attach->getContentTransferEncoding();
 
-            $headers[] = "Content-type: " . $contentType . ";name=\"=?" . $mimeBean->getCharset() . "?B?" . base64_encode(basename($attach->getFilename())) . '?="';
+        $attachmentBody[] = $this->formatMsg("Content-Disposition:" . $attach->getContentDisposition());
 
-            $headers[] = "Content-disposition: attachment; name=\"=?" . $mimeBean->getCharset() . "?B?" . base64_encode(basename($attach->getFilename())) . '?="';
+        $attachmentBody[] = $this->formatMsg(MessageHandler::getEncodingContent($attach));
 
-            $headers[] = 'Content-Transfer-Encoding: ' . preg_match('#(multipart|message)/#A', $contentType) ? '8bit' : 'base64' . self::EOL;
-
-            $headers[] = $attach->getContent() . self::EOL;
-        }
-        $headers[] = "--" . $boundary . "--";
-
-        return str_replace(self::EOL . '.', self::EOL . '..', trim(implode(self::EOL, $headers)));
+        return $attachmentBody;
 
     }
 
+    /**
+     * 追加结束符
+     * @param string $msg
+     * @return string
+     */
     private function formatMsg(string $msg)
     {
-        return $msg . self::EOL;
+        return $msg . MessageHandler::EOL;
     }
 
     /**
