@@ -8,24 +8,23 @@
 
 namespace EasySwoole\Smtp\Message;
 
-
 use EasySwoole\Spl\SplBean;
 
 abstract class MimeMessageBaseBean extends SplBean
 {
-    protected $mimeVersion;
-    protected $contentType;
-    protected $charset;
-    protected $contentTansferEncoding;
-    protected $contentId;
-    protected $contentDescription;
+
+    protected $mimeVersion;              //协议版本
+    protected $contentType;              //设置contentType
+    protected $charset;                  //设置字符
+    protected $contentTransferEncoding;  //设置编码
     protected $subject;
     protected $body;
+    protected $attachments = [];
 
     protected function initialize(): void
     {
         $this->mimeVersion = $this->mimeVersion ?? '1.0';
-        $this->charset = $this->charset ?? 'utf8';
+        $this->charset = $this->charset ?? 'UTF-8';
     }
 
     /**
@@ -79,50 +78,19 @@ abstract class MimeMessageBaseBean extends SplBean
     /**
      * @return mixed
      */
-    public function getContentTansferEncoding()
+    public function getContentTransferEncoding()
     {
-        return $this->contentTansferEncoding;
+        return $this->contentTransferEncoding;
     }
 
     /**
-     * @param mixed $contentTansferEncoding
+     * @param mixed $contentTransferEncoding
      */
-    public function setContentTansferEncoding($contentTansferEncoding): void
+    public function setContentTransferEncoding($contentTransferEncoding): void
     {
-        $this->contentTansferEncoding = $contentTansferEncoding;
+        $this->contentTransferEncoding = $contentTransferEncoding;
     }
 
-    /**
-     * @return mixed
-     */
-    public function getContentId()
-    {
-        return $this->contentId;
-    }
-
-    /**
-     * @param mixed $contentId
-     */
-    public function setContentId($contentId): void
-    {
-        $this->contentId = $contentId;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getContentDescription()
-    {
-        return $this->contentDescription;
-    }
-
-    /**
-     * @param mixed $contentDescription
-     */
-    public function setContentDescription($contentDescription): void
-    {
-        $this->contentDescription = $contentDescription;
-    }
 
     /**
      * @return mixed
@@ -154,5 +122,21 @@ abstract class MimeMessageBaseBean extends SplBean
     public function setBody($body): void
     {
         $this->body = $body;
+    }
+
+    /**
+     * @param $attachment
+     */
+    public function addAttachment($attachment)
+    {
+        $this->attachments[] = $attachment;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAttachments()
+    {
+        return $this->attachments;
     }
 }
