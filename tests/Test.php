@@ -19,9 +19,9 @@ use EasySwoole\Smtp\Mailer;
     $config->setServer('smtp.qq.com');
     $config->setPort(465);
     $config->setSsl(true);
-    $config->setUsername('xxxxx@qq.com');
-    $config->setPassword('xxxxx');
-    $config->setMailFrom('xxxxx@qq.com');
+    $config->setUsername('xxxxxx@qq.com');
+    $config->setPassword('xxxxxx');
+    $config->setMailFrom('xxxxxx@qq.com');
 
     $clientConfig = new ClientConfig();
     $clientConfig->setTimeout(5);
@@ -36,8 +36,8 @@ use EasySwoole\Smtp\Mailer;
         ->addAttachment('1234.xlsx', $dir . '/1234.xlsx');
     $mailer = new Mailer($config, $clientConfig);
     $mailer->setSubject('测试邮件')
-        ->addTo('xxxxx@qq.com')
-        ->addTo('xxxxx@qq.com')
+        ->addTo('xxxxxx@qq.com')
+        ->addTo('xxxxxx@qq.com')
         ->send($body);
 });
 
