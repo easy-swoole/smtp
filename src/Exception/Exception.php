@@ -1,9 +1,9 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: yf
- * Date: 2019-02-02
- * Time: 20:54
+ * User: xcg
+ * Date: 2020/4/14
+ * Time: 11:32
  */
 
 namespace EasySwoole\Smtp\Exception;
