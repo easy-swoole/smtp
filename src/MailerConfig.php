@@ -22,7 +22,7 @@ class MailerConfig extends SplBean
     protected $server;
 
     /** @var int 端口号 */
-    protected $port = 25;
+    protected $port;
 
     /** @var bool 是否开启ssl */
     protected $ssl;
@@ -54,7 +54,7 @@ class MailerConfig extends SplBean
     {
         /** @var bool ssl 默认关闭ssl */
         $this->ssl = $this->ssl ?? false;
-        /** @var int port 尝试自动识别端口号 */
+        /** @var int port 自动识别端口号 */
         $this->port = $this->port ?? ($this->ssl ? 465 : 25);
     }
 
