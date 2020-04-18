@@ -1,27 +1,39 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: yf
- * Date: 2019-02-02
- * Time: 21:00
+ * User: xcg
+ * Date: 2020/4/14
+ * Time: 16:29
  */
 
 namespace EasySwoole\Smtp\Message;
 
 
-use EasySwoole\Smtp\MessageHandler;
+use EasySwoole\Smtp\AbstractInterface\BaseMessage;
+use EasySwoole\Smtp\AbstractInterface\MessageInterface;
 
-class Text extends MimeMessageBaseBean
+class Text extends BaseMessage implements MessageInterface
 {
-    protected function initialize(): void
-    {
-        parent::initialize();
-        $this->contentType = $this->contentType ?? 'text/plain; charset=UTF-8';
-    }
+    use Attachment;
 
-    public function setBody($body): void
+    protected function getGeneralBody()
     {
-        parent::setBody($body);
-        $this->contentTransferEncoding = MessageHandler::getContentTransferEncoding($body);
+        $charset = $this->isUtf8($this->body) ? 'utf-8' : 'US-ASCII';
+        $plane = str_replace("\r", '', trim($this->body));
+        $count = ceil(strlen($plane) / $this->lineLength);
+
+        $body = [];
+        $body[] = 'Content-Type: text/plain; charset=' . $charset;
+        $body[] = 'Content-Transfer-Encoding: 7bit';
+        $body[] = null;
+
+        for ($i = 0; $i < $count; $i++) {
+            $body[] = substr($plane, ($i * $this->lineLength), $this->lineLength);
+        }
+
+        $body[] = null;
+        $body[] = null;
+
+        return $body;
     }
 }
