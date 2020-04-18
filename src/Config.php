@@ -1,9 +1,9 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: xcg
- * Date: 2020/4/14
- * Time: 10:10
+ * User: runs
+ * Date: 19-1-28
+ * Time: 下午2:36
  */
 
 namespace EasySwoole\Smtp;
@@ -11,117 +11,175 @@ namespace EasySwoole\Smtp;
 
 use EasySwoole\Spl\SplBean;
 
-class Config extends SplBean
+/**
+ * Class MailerConfig
+ *
+ * @package EasySwoole\Mailer
+ */
+class MailerConfig extends SplBean
 {
+    /** @var string 邮件服务器 */
     protected $server;
+
+    /** @var int 端口号 */
     protected $port;
+
+    /** @var bool 是否开启ssl */
     protected $ssl;
 
+    /** @var string 登陆用户名 */
     protected $username;
+
+    /** @var string 登陆密码 OR 授权码 */
     protected $password;
+
+    /** @var string 发件人 */
     protected $mailFrom;
 
     /**
-     * @return mixed
+     * @var float 发送超时时间
      */
-    public function getServer()
+    protected $timeout = 3.0;
+
+    /**
+     * @var int 最大包大小
+     */
+    protected $maxPackage = 1024 * 1024 * 2;//2M
+
+    /**
+     * initialize
+     * 初始化操作
+     */
+    protected function initialize(): void
+    {
+        /** @var bool ssl 默认关闭ssl */
+        $this->ssl = $this->ssl ?? false;
+        /** @var int port 自动识别端口号 */
+        $this->port = $this->port ?? ($this->ssl ? 465 : 25);
+    }
+
+    /**
+     * @return string
+     */
+    public function getServer(): string
     {
         return $this->server;
     }
 
     /**
-     * @param mixed $server
+     * @param string $server
      */
-    public function setServer($server): void
+    public function setServer(string $server): void
     {
         $this->server = $server;
     }
 
     /**
-     * @return mixed
+     * @return int
      */
-    public function getPort()
+    public function getPort(): int
     {
         return $this->port;
     }
 
     /**
-     * @param mixed $port
+     * @param int $port
      */
-    public function setPort($port): void
+    public function setPort(int $port): void
     {
         $this->port = $port;
     }
 
     /**
-     * @return mixed
+     * @return bool
      */
-    public function getSsl()
+    public function isSsl(): bool
     {
         return $this->ssl;
     }
 
     /**
-     * @param mixed $ssl
+     * @param bool $ssl
      */
-    public function setSsl($ssl): void
+    public function setSsl(bool $ssl): void
     {
         $this->ssl = $ssl;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getUsername()
+    public function getUsername(): string
     {
         return $this->username;
     }
 
     /**
-     * @param mixed $username
+     * @param string $username
      */
-    public function setUsername($username): void
+    public function setUsername(string $username): void
     {
+        if (empty($this->mailFrom)) {
+            $this->mailFrom = $username;
+        }
         $this->username = $username;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getPassword()
+    public function getPassword(): string
     {
         return $this->password;
     }
 
     /**
-     * @param mixed $password
+     * @param string $password
      */
-    public function setPassword($password): void
+    public function setPassword(string $password): void
     {
         $this->password = $password;
     }
 
     /**
-     * @return mixed
+     * @return string
      */
-    public function getMailFrom()
+    public function getMailFrom(): string
     {
         return $this->mailFrom;
     }
 
     /**
-     * @param mixed $mailFrom
+     * @param string $mailFrom
      */
-    public function setMailFrom($mailFrom): void
+    public function setMailFrom(string $mailFrom): void
     {
         $this->mailFrom = $mailFrom;
     }
 
-
-    protected function initialize(): void
+    /**
+     * @return float
+     */
+    public function getTimeout(): float
     {
-        //默认关闭ssl
-        $this->ssl = $this->ssl ?? false;
-        $this->port = $this->port ?? ($this->ssl ? 465 : 25);
+        return $this->timeout;
+    }
+
+    /**
+     * @param float $timeout
+     */
+    public function setTimeout(float $timeout): void
+    {
+        $this->timeout = $timeout;
+    }
+
+    public function setMaxPackage(int $maxPackage)
+    {
+        $this->maxPackage = $maxPackage;
+    }
+
+    public function getMaxPackage()
+    {
+        return $this->maxPackage;
     }
 }
