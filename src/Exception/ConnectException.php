@@ -2,14 +2,13 @@
 /**
  * Created by PhpStorm.
  * User: xcg
- * Date: 2019/11/6
- * Time: 16:04
+ * Date: 2020/4/14
+ * Time: 11:27
  */
 
 namespace EasySwoole\Smtp\Exception;
 
-
-class FileNotFoundException extends \Exception
+class ConnectException extends \Exception
 {
 
 }
