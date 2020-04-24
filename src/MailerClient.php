@@ -64,7 +64,7 @@ class MailerClient
         $this->client->send($this->formatMsg("ehlo {$ehloHost}"));
         //先看是否得到250应答,并清除多余应答
         $this->recvCodeCheck('250');
-        while (1) {
+        while (true) {
             $peek = $this->client->recv($this->timeout);
             if (empty($peek)) {
                 throw new Exception('waiting 250 code error');
@@ -83,8 +83,12 @@ class MailerClient
         //start send data
         $this->client->send($this->formatMsg("mail from:<{$this->config->getMailFrom()}>"));
         $this->recvCodeCheck('250');
-        $this->client->send($this->formatMsg("rcpt to:<{$mailTo}>"));
-        $this->recvCodeCheck('250');
+
+        foreach (explode(',', $mailTo) as $mail) {
+            $this->client->send($this->formatMsg("rcpt to:<{$mail}>"));
+            $this->recvCodeCheck('250');
+        }
+
         $this->client->send($this->formatMsg("data"));
         $this->recvCodeCheck('354');
 
