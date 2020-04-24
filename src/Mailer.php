@@ -37,5 +37,16 @@ class Mailer
         return true;
     }
 
-
+    /**
+     * @param array              $mailToList
+     * @param MimeMessageBaseBean $mimeBean
+     * @return bool
+     * @throws Exception\Exception
+     */
+    public function sendToAll(array $mailToList, MimeMessageBaseBean $mimeBean)
+    {
+        $client = new MailerClient($this->config);
+        $client->send(implode(',', $mailToList), $mimeBean);
+        return true;
+    }
 }
