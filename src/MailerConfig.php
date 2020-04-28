@@ -104,6 +104,11 @@ class MailerConfig extends SplBean
     public function setSsl(bool $ssl): void
     {
         $this->ssl = $ssl;
+        if ($ssl) {
+            $this->port = $this->port === 25 ? 465 : $this->port;
+        } else {
+            $this->port = $this->port === 465 ? 25 : $this->port;
+        }
     }
 
     /**
