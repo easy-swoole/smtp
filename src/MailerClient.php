@@ -83,8 +83,10 @@ class MailerClient
         //start send data
         $this->client->send($this->formatMsg("mail from:<{$this->config->getMailFrom()}>"));
         $this->recvCodeCheck('250');
-        $this->client->send($this->formatMsg("rcpt to:<{$mailTo}>"));
-        $this->recvCodeCheck('250');
+        foreach (explode(',', $mailTo) as $item) {
+            $this->client->send($this->formatMsg("rcpt to:<{$item}>"));
+            $this->recvCodeCheck('250');
+        }
         $this->client->send($this->formatMsg("data"));
         $this->recvCodeCheck('354');
 
