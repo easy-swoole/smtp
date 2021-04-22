@@ -16,7 +16,7 @@ class Html extends MimeMessageBaseBean
     protected function initialize(): void
     {
         parent::initialize();
-        $this->contentType = $this->contentType ?? 'text/html';
+        $this->contentType = $this->contentType ?? 'text/html; charset=UTF-8';
     }
 
     public function setBody($body): void
