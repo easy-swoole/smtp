@@ -81,7 +81,7 @@ class MailerClient
         $this->client->send($this->formatMsg(base64_encode($this->config->getPassword())));
         $this->recvCodeCheck('235');
         //start send data
-        $this->client->send($this->formatMsg("mail from:<{$this->config->getMailFrom()}>"));
+        $this->client->send($this->formatMsg("mail from:<{$this->config->getUsername()}>"));
         $this->recvCodeCheck('250');
         foreach (explode(',', $mailTo) as $item) {
             $this->client->send($this->formatMsg("rcpt to:<{$item}>"));
