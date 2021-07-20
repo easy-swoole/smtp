@@ -52,10 +52,6 @@ class Command
 
     private static function payload(string $str)
     {
-        echo "payload: " . str_replace([
-                "{SP}",
-                "{CRLF}"
-            ], [self::SP, self::CRLF], $str);
         return str_replace([
             "{SP}",
             "{CRLF}"

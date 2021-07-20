@@ -10,8 +10,6 @@ use Swoole\Coroutine\Client;
 
 class Mailer
 {
-    protected $charset = "UTF-8";
-
     protected $host;
 
     protected $port = 465;
@@ -28,7 +26,15 @@ class Mailer
 
     protected $enableException = false;
 
-    protected $address = [];
+    protected $to = [];
+
+    protected $from = [];
+
+    protected $replyTo = [];
+
+    protected $cc = [];
+
+    protected $bcc = [];
 
     /**
      * @param bool $enableException
@@ -36,15 +42,6 @@ class Mailer
     public function setEnableException(bool $enableException): void
     {
         $this->enableException = $enableException;
-    }
-
-
-    /**
-     * @param string $charset
-     */
-    public function setCharset(string $charset): void
-    {
-        $this->charset = $charset;
     }
 
     /**
@@ -105,10 +102,48 @@ class Mailer
 
     /**
      * @param string $address
+     * @param string $name
      */
-    public function addAddress(string $address): void
+    public function addAddress(string $address, string $name = ''): void
     {
-        $this->address[] = $address;
+        $this->to[] = [$address, $name];
+    }
+
+    /**
+     * @param string $address
+     * @param string $name
+     */
+    public function setFrom(string $address, string $name = ''): void
+    {
+        $this->from = [$address, $name];
+    }
+
+    /**
+     * @param $address
+     * @param $name
+     */
+    public function setReplyTo(string $address, string $name = ""): void
+    {
+        $this->replyTo = [$address, $name];
+    }
+
+
+    /**
+     * @param string $address
+     * @param string $name
+     */
+    public function addCc(string $address, string $name = ''): void
+    {
+        $this->cc[] = [$address, $name];
+    }
+
+    /**
+     * @param string $address
+     * @param string $name
+     */
+    public function addBcc(string $address, string $name = ''): void
+    {
+        $this->bcc[] = [$address, $name];
     }
 
 
@@ -172,8 +207,8 @@ class Mailer
             return $this->buildResponse(-1);
         }
 
-        foreach ($this->address as $address) {
-            $client->send(Command::rcpt($address));
+        foreach (array_merge($this->to, $this->cc, $this->bcc) as $item) {
+            $client->send(Command::rcpt($item[0]));
             if (($recv = $this->recvCheck($client, 250)) === false) {
                 return $this->buildResponse(-1);
             }
@@ -184,26 +219,7 @@ class Mailer
             return $this->buildResponse(-1);
         }
 
-
-        $body = "Hello,this is smtp test!";
-        $mailTo = implode(",", $this->address);
-        //build body
-        $mailBody = [];
-        $mailBody[] = "MIME-Version: 1.0";
-        $mailBody[] = "From: {$this->username}<{$this->username}>";
-        $mailBody[] = "To: {$mailTo}";
-        $mailBody[] = "Subject: =?{$this->charset}?B?" . base64_encode($body) . "?=";
-
-        $mailBody[] = "Content-Type: text/plain; charset=UTF-8;";
-        $encoding = preg_match('#[^\n]{990}#', $body)
-            ? 'quoted-printable'
-            : (preg_match('#[\x80-\xFF]#', $body) ? '8bit' : '7bit');
-        $mailBody[] = Command::raw("Content-Transfer-Encoding: $encoding");
-
-        $mailBody[] = Command::raw($body);
-
-
-        $client->send(implode("\r\n", $mailBody));
+        $client->send($this->__createHeader() . $request->getPayload());
         $client->send(Command::dataEnd());
         if (($recv = $this->recvCheck($client, 250)) === false) {
             return $this->buildResponse(-1);
@@ -216,15 +232,48 @@ class Mailer
 
     }
 
+    private function __addrFormat(array $addr)
+    {
+        $ret = [];
+        foreach ($addr as $item) {
+            $address = current($item);
+            $name = next($item);
+            reset($item);
+
+            if ($name) {
+                $ret[] = "{$name} <$address>";
+                continue;
+            }
+
+            $ret[] = "$address";
+        }
+
+        return $ret;
+    }
+
+    private function __createHeader()
+    {
+        $header = [];
+        $header[] = 'From: ' . ($this->from ? current($this->__addrFormat([$this->from])) : "$this->username");
+        $header[] = 'To: ' . ($this->to ? implode(',', $this->__addrFormat($this->to)) : 'undisclosed-recipients:;');
+
+        if ($this->cc) {
+            $header[] = 'Cc: ' . implode(',', $this->__addrFormat($this->cc));
+        }
+
+        if ($this->replyTo) {
+            $header[] = 'Reply-To: ' . current($this->__addrFormat([$this->replyTo]));
+        }
+
+        return implode("\r\n", $header) . "\r\n";
+    }
+
     protected function recvCheck(Client $client, string $code)
     {
         $recv = $client->recv($this->timeout);
         if ($recv && strpos($recv, $code) !== false) {
-            var_dump($recv);
             return $recv;
         }
-
-        var_dump($recv);
 
         return false;
     }

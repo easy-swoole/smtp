@@ -15,7 +15,8 @@
     ],
     "require": {
         "php": ">=7.1.0",
-        "ext-swoole": ">=4.4.4"
+        "ext-swoole": ">=4.4.4",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "easyswoole/swoole-ide-helper": "^1.2"
