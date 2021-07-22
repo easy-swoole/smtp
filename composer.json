@@ -7,13 +7,16 @@
         {
             "name": "RunsTp",
             "email": "runstp@163.com"
+        },
+        {
+            "name": "Stitch",
+            "email": "975975398@qq.com"
         }
     ],
     "require": {
         "php": ">=7.1.0",
-        "ext-swoole": "^4.2.6",
-        "easyswoole/spl": "^1.1",
-        "easyswoole/utility": "^1.0"
+        "ext-swoole": ">=4.4.4",
+        "ext-mbstring": "*"
     },
     "require-dev": {
         "easyswoole/swoole-ide-helper": "^1.2"
@@ -25,7 +28,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "EasySwoole\\Smtp\\Test\\": "tests/"
+            "EasySwoole\\Smtp\\Tests\\": "tests/"
         }
     }
 }
