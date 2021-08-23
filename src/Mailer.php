@@ -162,22 +162,22 @@ class Mailer
         ]);
 
         if ($client->connect($this->host, $this->port, $this->timeout) === false) {
-            return $this->buildResponse(-1);
+            return $this->buildResponse(Response::STATUS_CONNECT_TIMEOUT);
         }
 
         if (($ret = $this->recvCheck($client, 220)) === false) {
-            return $this->buildResponse(-1);
+            return $this->buildResponse(Response::STATUS_NOT_SMTP_PROTOCOL);
         }
 
         $client->send(Command::ehlo(explode(' ', $ret)[1]));
         if (($ret = $this->recvCheck($client, 250)) === false) {
-            return $this->buildResponse(-1);
+            return $this->buildResponse(Response::STATUS_IDENTIFY_SENDER_ERROR);
         }
 
         while (1) {
             $peek = $client->recv($this->timeout);
             if (empty($peek)) {
-                return $this->buildResponse(-1);
+                return $this->buildResponse(Response::STATUS_RECEIVE_TIMEOUT);
             } else {
                 if (substr($peek, 3, 1) != '-') {
                     break;
@@ -186,50 +186,51 @@ class Mailer
         }
 
         $client->send(Command::auth('login'));
-        if (($recv = $this->recvCheck($client, 334)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 334)) === false) {
+            return $this->buildResponse(Response::STATUS_AUTH_MODE_ERROR);
         }
 
 
         $client->send(Command::raw(base64_encode($this->username)));
-        if (($recv = $this->recvCheck($client, 334)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 334)) === false) {
+            return $this->buildResponse(Response::STATUS_USERNAME_ERROR);
         }
 
 
         $client->send(Command::raw(base64_encode($this->password)));
-        if (($recv = $this->recvCheck($client, 235)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 235)) === false) {
+            return $this->buildResponse(Response::STATUS_PASSWORD_ERROR);
         }
 
         $client->send(Command::mail($this->username));
-        if (($recv = $this->recvCheck($client, 250)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 250)) === false) {
+            return $this->buildResponse(Response::STATUS_FROM_MAIL_ERROR);
         }
 
         foreach (array_merge($this->to, $this->cc, $this->bcc) as $item) {
             $client->send(Command::rcpt($item[0]));
-            if (($recv = $this->recvCheck($client, 250)) === false) {
-                return $this->buildResponse(-1);
+            if (($ret = $this->recvCheck($client, 250)) === false) {
+                return $this->buildResponse(Response::STATUS_RCPT_MAIL_ERROR);
             }
         }
 
         $client->send(Command::dataStart());
-        if (($recv = $this->recvCheck($client, 354)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 354)) === false) {
+            return $this->buildResponse(Response::STATUS_DATA_START_ERROR);
         }
 
         $client->send($this->__createHeader() . $request->getPayload());
         $client->send(Command::dataEnd());
-        if (($recv = $this->recvCheck($client, 250)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 250)) === false) {
+            return $this->buildResponse(Response::STATUS_DATA_END_ERROR);
         }
 
         $client->send(Command::quit());
-        if (($recv = $this->recvCheck($client, 221)) === false) {
-            return $this->buildResponse(-1);
+        if (($ret = $this->recvCheck($client, 221)) === false) {
+            return $this->buildResponse(Response::STATUS_QUIT_ERROR);
         }
 
+        return new Response();
     }
 
     private function __addrFormat(array $addr)
@@ -278,12 +279,15 @@ class Mailer
         return false;
     }
 
-    protected function buildResponse($status): Response
+    protected function buildResponse(int $status): Response
     {
         if ($this->enableException === true) {
-            throw new Exception();
+            throw new Exception(Response::status2msg($status));
         }
 
-        return new Response();
+        $response = new Response();
+        $response->setStatus($status);
+        $response->setMsg(Response::status2msg($status));
+        return $response;
     }
 }
