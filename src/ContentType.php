@@ -4,6 +4,9 @@ namespace EasySwoole\Smtp;
 
 use EasySwoole\Smtp\Exception\Exception;
 
+/**
+ * reference link https://github.com/PHPMailer/PHPMailer/blob/master/src/PHPMailer.php
+ */
 class ContentType
 {
     const CHARSET_ASCII = 'us-ascii';
