@@ -131,10 +131,14 @@ abstract class Request implements RequestInterface
 
     private function __readFile(string $filePath): string
     {
-        $handle = fopen($filePath, 'rb');
-        $stream = fread($handle, filesize($filePath));
+        $stream = '';
+        $handle = fopen($filePath, "rb");
+        if ($handle) {
+            while (!feof($handle))
+                $stream .= fread($handle, 1024);
+        }
         fclose($handle);
-        if ($stream === false) {
+        if (!$stream) {
             throw new Exception("Unable to read file '$filePath'.");
         }
         return $stream;
